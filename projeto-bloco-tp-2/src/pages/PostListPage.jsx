@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PostCard from '../components/PostCard';
 import TopicDetailsPage from './TopicDetailsPage'; 
 
 const PostsListPage = () => {
   const [selectedTopicId, setSelectedTopicId] = useState(null); 
+  const [posts, setPosts] = useState(null);
+  const [message, setMessage] = useState(null);
 
-  const topics = [
-    { id: 1, title: 'Primeiro tópico', author: 'Alice', comments: 5, likes: 10 },
-    { id: 2, title: 'Segundo tópico', author: 'Bob', comments: 3, likes: 8 },
-  ];
+  const baseUrl = 'https://forum-gamificado-2f07b-default-rtdb.firebaseio.com/';
+
+  function convertData(data) {
+    const ids = Object.keys(data);
+    let postsConverted = Object.values(data);
+    return postsConverted.map((post, index) => {
+      return {
+        id: ids[index],
+        ...post,
+      }
+    })
+  }
+
+  useEffect(() => {
+    fetch(`${baseUrl}/posts.json`)
+    .then(async (resp) => {
+      const respPost = await resp.json();
+      let convertedPost = convertData(respPost);
+      setPosts(convertedPost);
+    })
+    .catch((err) => {
+      setMessage(err.message)
+    })
+
+  }, [])
 
   const showTopicDetails = (id) => {
     setSelectedTopicId(id);
@@ -18,10 +41,10 @@ const PostsListPage = () => {
     <div className="container mx-auto">
       <h1 className="text-3xl font-bold mt-8">Lista de Tópicos</h1>
       
-      {topics.map(topic => (
-        <div key={topic.id} className="mt-4">
-          <PostCard topic={topic} />
-          <button onClick={() => showTopicDetails(topic.id)}>Ver Detalhes</button>
+      {posts && posts.map(post => (
+        <div key={post.id} className="mt-4">
+          <PostCard topic={convertedPost.title} />
+          <button onClick={() => showTopicDetails(post.id)}>Ver Detalhes</button>
         </div>
       ))}
       
